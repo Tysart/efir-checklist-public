@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Чек-лист эфира</title>
+<style>
+  :root{
+    --bg:#0e1116;
+    --card:#191d26;
+    --card2:#202636;
+    --text:#eef1f6;
+    --muted:#9aa3b2;
+    --accent:#ff4d4f;
+    --accent-soft:rgba(255,77,79,.14);
+    --green:#2fd17a;
+    --green-soft:rgba(47,209,122,.14);
+    --border:#2a3040;
+    --radius:16px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:17px;
+    line-height:1.45;
+    padding-bottom:calc(24px + env(safe-area-inset-bottom));
+    -webkit-font-smoothing:antialiased;
+  }
+  header{
+    position:sticky;top:0;z-index:10;
+    background:rgba(14,17,22,.92);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--border);
+    padding:14px 16px;
+    display:flex;align-items:center;gap:12px;
+  }
+  header .back{
+    background:none;border:1px solid var(--border);color:var(--text);
+    width:40px;height:40px;border-radius:12px;font-size:20px;cursor:pointer;
+    flex:0 0 auto;display:flex;align-items:center;justify-content:center;
+  }
+  header .titles{flex:1 1 auto;min-width:0}
+  header h1{margin:0;font-size:19px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  header .sub{color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  header .pct{font-variant-numeric:tabular-nums;font-weight:700;font-size:18px;color:var(--accent);flex:0 0 auto}
+  .hidden{display:none !important}
+
+  main{padding:16px;max-width:760px;margin:0 auto}
+
+  .hint{
+    background:var(--accent-soft);color:#ffb3b3;
+    border:1px solid rgba(255,77,79,.3);border-radius:12px;
+    padding:10px 14px;font-size:14px;margin-bottom:16px;
+  }
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:430px){.grid{grid-template-columns:1fr}}
+  .card{
+    background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+    padding:16px;cursor:pointer;text-align:left;color:var(--text);
+    transition:transform .06s ease,border-color .15s ease;
+  }
+  .card:active{transform:scale(.98)}
+  .card .num{color:var(--accent);font-size:13px;font-weight:700;letter-spacing:.4px}
+  .card .t{font-size:17px;font-weight:700;margin:6px 0 4px}
+  .card .s{color:var(--muted);font-size:13.5px}
+  .card .bar{height:5px;border-radius:99px;background:var(--border);margin-top:12px;overflow:hidden}
+  .card .bar i{display:block;height:100%;background:var(--green);border-radius:99px;width:0}
+
+  .card.wide{grid-column:1 / -1;background:linear-gradient(135deg,#201a20,var(--card));border-color:rgba(255,77,79,.35)}
+  .card.wide .t{font-size:18px}
+
+  .progress{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:16px}
+  .progress .row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+  .progress .lbl{color:var(--muted);font-size:14px}
+  .progress .val{font-weight:700;font-size:16px}
+  .progress .bar{height:8px;border-radius:99px;background:var(--border);overflow:hidden}
+  .progress .bar i{display:block;height:100%;background:var(--green);border-radius:99px;width:0;transition:width .25s ease}
+
+  section{margin-bottom:20px}
+  section>h2{font-size:14px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:0 0 10px}
+  .step{
+    display:flex;align-items:flex-start;gap:12px;
+    background:var(--card);border:1px solid var(--border);border-radius:14px;
+    padding:14px;margin-bottom:8px;cursor:pointer;transition:border-color .15s ease,background .15s ease;
+  }
+  .step.done{border-color:rgba(47,209,122,.4);background:var(--green-soft)}
+  .step .box{
+    width:26px;height:26px;border-radius:8px;border:2px solid var(--muted);
+    flex:0 0 auto;margin-top:1px;display:flex;align-items:center;justify-content:center;
+    font-size:16px;color:transparent;transition:all .12s ease;
+  }
+  .step.done .box{background:var(--green);border-color:var(--green);color:#06291a}
+  .step .txt{flex:1 1 auto}
+  .step .hint2{color:var(--muted);font-size:13.5px;margin-top:3px}
+  .detail-toggle{margin-top:8px;background:none;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:5px 11px;font-size:13px;cursor:pointer;display:inline-block}
+  .detail-toggle:active{transform:scale(.97)}
+  .detail{display:none;margin-top:10px;border-top:1px solid var(--border);padding-top:10px}
+  .detail.open{display:block}
+  .detail .dtxt{color:var(--muted);font-size:14px}
+  .detail img{max-width:100%;border-radius:10px;margin-top:8px;border:1px solid var(--border)}
+
+  .btns{display:flex;gap:10px;margin-top:4px}
+  .btn{
+    flex:1;background:var(--card);border:1px solid var(--border);color:var(--text);
+    border-radius:12px;padding:13px;font-size:15px;font-weight:600;cursor:pointer;
+  }
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn:active{transform:scale(.98)}
+
+  .symptom{
+    background:var(--card);border:1px solid var(--border);border-radius:14px;
+    padding:15px;margin-bottom:8px;cursor:pointer;text-align:left;width:100%;color:var(--text);
+    display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:16px;font-weight:600;
+  }
+  .symptom .sev{font-size:12px;font-weight:700;padding:3px 9px;border-radius:99px;flex:0 0 auto}
+  .sev.crit{background:var(--accent-soft);color:#ff8a8a}
+  .sev.warn{background:rgba(255,170,0,.15);color:#ffc24d}
+  .sev.ok{background:var(--green-soft);color:#6fe3a5}
+
+  .home-stats{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:18px;color:var(--muted);font-size:14px}
+  .home-stats .reset{background:none;border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:8px 14px;font-size:13px;cursor:pointer}
+  .home-stats .reset:active{transform:scale(.97)}
+</style>
+</head>
+<body>
+  <header>
+    <button class="back hidden" id="backBtn" aria-label="Назад">‹</button>
+    <div class="titles">
+      <h1 id="hTitle">Чек-лист эфира</h1>
+      <div class="sub" id="hSub">операторы и режиссёры эфира</div>
+    </div>
+    <div class="pct hidden" id="hPct"></div>
+  </header>
+  <main id="app"><p style="color:#9aa3b2;font-size:15px;padding:8px 4px">Если списки не загрузились — открой этот файл в Safari или Chrome, а не во встроенном просмотрщике Telegram.</p></main>
+  <script>
+  // ===================== ДАННЫЕ (заменим на твои) =====================
+  const DATA = {
+    types: [
+      {
+        id: "prep",
+        num: "00",
+        title: "Подготовка любой съёмки",
+        subtitle: "Универсально: открыть бриф и пройти по пунктам",
+        sections: [
+          { name: "Бриф", steps: [
+            { t: "Открыть бриф в Битриксе" },
+            { t: "Название и название файла", h: "Например: 260902 Эфир для ПК-24 и ПК-25" },
+            { t: "Дата, время, длительность", h: "Когда быть на месте и сколько длится" },
+            { t: "Тип эфира", h: "Внутренний или внешний" },
+            { t: "Люди в кадре", h: "Кто именно; проверить, не помечено ли «УТОЧНЯЕТСЯ»" },
+            { t: "Материалы", h: "Обложка и другие вложения — скачать/подготовить" },
+            { t: "Техника", h: "План по умолчанию: общий + крупный на АВ" },
+            { t: "Потоки", h: "Куда идёт эфир (GetCourse + ВК и т.д.) → выбрать нужный чек-лист ниже" },
+            { t: "Путь выгрузки", h: "Куда складывать результат (папка на Яндекс.Диске)" },
+            { t: "Видеопродакшн (АС)", h: "Путь к проекту в системе" },
+            { t: "Постановка кадра", h: "Референсы в задаче. ВАЖНО: не всегда нужно повторять сцену — в брифе указано, повторять или нет" }
+          ]}
+        ]
+      },
+      {
+        id: "zapis",
+        num: "01",
+        title: "Запись курсов",
+        subtitle: "Запись без эфира — ютуб, площадки, геткурс",
+        sections: [
+          { name: "Подготовка", steps: [
+            { t: "Проверить камеру и заряд", h: "Пример-заглушка" },
+            { t: "Проверить свет" },
+            { t: "Проверить звук (микрофон)" },
+            { t: "Открыть программу записи" }
+          ]},
+          { name: "Запись", steps: [
+            { t: "Нажать запись" },
+            { t: "Сделать пробный дубль" },
+            { t: "Записать материал" }
+          ]},
+          { name: "Завершение", steps: [
+            { t: "Остановить запись" },
+            { t: "Сохранить файл" },
+            { t: "Залить на площадку" }
+          ]}
+        ]
+      },
+      {
+        id: "vk",
+        num: "02",
+        title: "Эфир ВК",
+        subtitle: "Со скринами · код отдаём отделу для ГК",
+        sections: [
+          { name: "Создание трансляции (ВК)", steps: [
+            { t: "Открыть VK Video" },
+            { t: "Создать → Трансляция" },
+            { t: "Заполнить название и описание" },
+            { t: "Скопировать ключ трансляции и адрес сервера" },
+            { t: "Вставить ключ и адрес в OBS" },
+            { t: "Скопировать код встраивания → отдать отделу для ГК", h: "Сами ГК не настраиваем — только отдаём код с ВК" }
+          ]},
+          { name: "Подготовка (перед эфиром)", steps: [
+            { t: "Включить запись на камеры" },
+            { t: "Включить запись в OBS" },
+            { t: "Включить Zoom-рекордер" },
+            { t: "Проверить скрин (шаринг экрана)" }
+          ]},
+          { name: "Эфир", steps: [
+            { t: "Начать трансляцию в OBS" },
+            { t: "Проверить картинку и звук" }
+          ]},
+          { name: "Завершение", steps: [
+            { t: "Остановить трансляцию" },
+            { t: "Остановить записи (камеры, OBS, Zoom)" },
+            { t: "Проверить запись" }
+          ]}
+        ]
+      },
+      {
+        id: "yt",
+        num: "03",
+        title: "Эфир Ютуб",
+        subtitle: "Со скринами",
+        sections: [
+          { name: "Создание трансляции (Ютуб)", steps: [
+            { t: "Открыть YouTube Studio" },
+            { t: "Создать → Начать трансляцию" },
+            { t: "Выбрать «Прямой эфир»" },
+            { t: "Заполнить название и видимость" },
+            { t: "Запланировать или начать сейчас" },
+            { t: "Скопировать ключ трансляции и URL сервера" },
+            { t: "Вставить в OBS" }
+          ]},
+          { name: "Подготовка (перед эфиром)", steps: [
+            { t: "Включить запись на камеры" },
+            { t: "Включить запись в OBS" },
+            { t: "Включить Zoom-рекордер" },
+            { t: "Проверить скрин (шаринг экрана)" }
+          ]},
+          { name: "Эфир", steps: [
+            { t: "Начать трансляцию в OBS" },
+            { t: "Проверить звук" }
+          ]},
+          { name: "Завершение", steps: [
+            { t: "Остановить трансляцию" },
+            { t: "Остановить записи (камеры, OBS, Zoom)" }
+          ]}
+        ]
+      },
+      {
+        id: "tg",
+        num: "04",
+        title: "Эфир Телеграм",
+        subtitle: "Отдельные настройки · запланированной нет",
+        sections: [
+          { name: "Создание трансляции (ТГ)", steps: [
+            { t: "Открыть канал" },
+            { t: "⋮ → Начать трансляцию" },
+            { t: "Выбрать «С помощью OBS»", h: "Запланированной трансляции в ТГ нет — запускаем вручную" },
+            { t: "Скопировать Server URL и Stream key" },
+            { t: "Вставить в OBS" }
+          ]},
+          { name: "Подготовка (перед эфиром)", steps: [
+            { t: "Включить запись на камеры" },
+            { t: "Включить запись в OBS" },
+            { t: "Включить Zoom-рекордер" }
+          ]},
+          { name: "Эфир", steps: [
+            { t: "Начать трансляцию в Telegram" },
+            { t: "Начать трансляцию в OBS" },
+            { t: "Проверить картинку и звук" }
+          ]},
+          { name: "Завершение", steps: [
+            { t: "Остановить трансляцию" },
+            { t: "Остановить записи (камеры, OBS, Zoom)" }
+          ]}
+        ]
+      },
+      {
+        id: "obs",
+        num: "05",
+        title: "Настройка OBS",
+        subtitle: "Трансляция и запись в OBS Studio",
+        sections: [
+          { name: "Базовая настройка", steps: [
+            { t: "Установить OBS Studio" },
+            { t: "Создать сцену" },
+            { t: "Добавить источник «Устройство захвата видео» (камера)" },
+            { t: "Добавить источник «Захват экрана» (для скринов)" },
+            { t: "Проверить звук (микрофон)" }
+          ]},
+          { name: "Подключение трансляции", steps: [
+            { t: "Настройки → Трансляция → выбрать сервис", h: "YouTube / ВК / Telegram — или «Пользовательский»" },
+            { t: "Вставить ключ трансляции и адрес сервера" },
+            { t: "Настройки → Вывод → битрейт (напр. 6000 Kbps для 1080p)" }
+          ]},
+          { name: "Перед эфиром", steps: [
+            { t: "Нажать «Начать запись» (локальная копия)" },
+            { t: "Нажать «Начать трансляцию»" }
+          ]}
+        ]
+      },
+      {
+        id: "pre-efir",
+        num: "06",
+        title: "Перед любой съёмкой и эфиром",
+        subtitle: "Тайминг, эфир с музыкой, записи",
+        sections: [
+          { name: "Тайминг (всегда)", steps: [
+            { t: "За 1 час: петлички заряжены, лежат на столе или кресле" },
+            { t: "За 1 час: помощник Курпатова забирает петлички", h: "Повесить на Курпатова + второго спикера, если он не один" }
+          ]},
+          { name: "За 30 мин до старта", steps: [
+            { t: "Эфир: запустить эфир с музыкой", h: "Сцена в OBS «STILL»" },
+            { t: "Съёмка: запустить запись в OBS", h: "OBS сразу пишет в «оперативные записи»" }
+          ]},
+          { name: "Запись (всегда)", steps: [
+            { t: "Включить запись на камеры" },
+            { t: "Включить запись в OBS" },
+            { t: "Включить Zoom-рекордер" }
+          ]}
+        ]
+      },
+      {
+        id: "zoom",
+        num: "07",
+        title: "Zoom-созвон",
+        subtitle: "Двухсторонняя связь со студии",
+        sections: [
+          { name: "Подготовка", steps: [
+            { t: "Создать встречу" },
+            { t: "Отправить ссылку" },
+            { t: "Проверить двухстороннюю связь" }
+          ]},
+          { name: "Созвон", steps: [
+            { t: "Запустить созвон" },
+            { t: "Проверить звук/видео с обеих сторон" }
+          ]},
+          { name: "Завершение", steps: [
+            { t: "Завершить созвон" }
+          ]}
+        ]
+      },
+      {
+        id: "zal",
+        num: "08",
+        title: "Эфир в зале",
+        subtitle: "Арополи / Делос (чаще Делос)",
+        sections: [
+          { name: "Подготовка", steps: [
+            { t: "Проверить аппаратуру", h: "Список аппаратуры надиктуем" },
+            { t: "Проверить свет и звук в зале" }
+          ]},
+          { name: "Эфир", steps: [
+            { t: "Запустить эфир" }
+          ]},
+          { name: "Завершение", steps: [
+            { t: "Собрать аппаратуру" }
+          ]}
+        ]
+      },
+      {
+        id: "multistream",
+        num: "09",
+        title: "Мультистрим",
+        subtitle: "Стрим сразу на несколько площадок",
+        sections: [
+          { name: "Настройка", steps: [
+            { t: "Открыть в OBS панель «Multiple output»", h: "Плагин уже установлен везде; меню Docks → Multiple output", img: "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='300'%20height='120'%3E%3Crect%20width='300'%20height='120'%20rx='12'%20fill='%23202636'/%3E%3Ctext%20x='150'%20y='66'%20fill='%239aa3b2'%20font-size='15'%20text-anchor='middle'%20font-family='Arial'%3Escreenshot%3C/text%3E%3C/svg%3E" },
+            { t: "Нажать «Add new target» — по одной строке на каждую площадку" },
+            { t: "Вставить RTMP-адрес с ключом в каждую строку", h: "ВК / Ютуб / Телеграм — у каждой свой адрес + ключ" },
+            { t: "Нажать «Start all» — запустить все площадки" },
+            { t: "Остановить — «Stop all»" }
+          ]}
+        ]
+      }
+    ],
+    emergency: [
+      { symptom: "Нет звука", sev: "crit", steps: ["Проверить микрофон", "Проверить кабель", "Позвать звукорежиссёра"] },
+      { symptom: "Пропал сигнал", sev: "crit", steps: ["Проверить интернет", "Перезапустить трансляцию", "Позвать режиссёра"] },
+      { symptom: "Гость не подключился", sev: "warn", steps: ["Проверить ссылку", "Позвонить гостю", "Сдвинуть тайминг"] },
+      { symptom: "Камера зависла", sev: "warn", steps: ["Перезагрузить камеру", "Проверить питание"] },
+      { symptom: "Пробный дубль прошёл", sev: "ok", steps: ["Отметить в чек-листе", "Начинать запись"] }
+    ]
+  };
+  // ===================== СОСТОЯНИЕ =====================
+  const LS_KEY = "efir-progress-v1";
+  let progress = {};
+  try { progress = JSON.parse(localStorage.getItem(LS_KEY) || "{}"); } catch(e){ progress = {}; }
+  function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(progress)); }catch(e){} }
+
+  const $ = s => document.querySelector(s);
+  const app = $("#app");
+  const backBtn = $("#backBtn");
+  const hTitle = $("#hTitle");
+  const hSub = $("#hSub");
+  const hPct = $("#hPct");
+
+  function esc(s){ return String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+  function typeProgress(t){
+    let total = 0, done = 0;
+    t.sections.forEach((s, si) => s.steps.forEach((_, i) => {
+      total++; if (progress[t.id + "-" + si + "-" + i]) done++;
+    }));
+    return { total, done, pct: total ? Math.round(done/total*100) : 0 };
+  }
+
+  function overallProgress(){
+    let total = 0, done = 0;
+    DATA.types.forEach(t => { const p = typeProgress(t); total += p.total; done += p.done; });
+    return { total, done };
+  }
+
+  function setHeader(title, sub, pct){
+    hTitle.textContent = title;
+    hSub.textContent = sub;
+    if (pct == null){ hPct.classList.add("hidden"); }
+    else { hPct.classList.remove("hidden"); hPct.textContent = pct + "%"; }
+  }
+
+  // ===================== ЭКРАН: ГЛАВНАЯ =====================
+  function renderHome(){
+    backBtn.classList.add("hidden");
+    setHeader("Чек-лист эфира", "операторы и режиссёры эфира", null);
+
+    const cards = DATA.types.map(t => {
+      const p = typeProgress(t);
+      return `<button class="card" data-id="${t.id}">
+        <div class="num">${t.num}</div>
+        <div class="t">${esc(t.title)}</div>
+        <div class="s">${esc(t.subtitle)}</div>
+        <div class="bar"><i style="width:${p.pct}%"></i></div>
+      </button>`;
+    }).join("");
+
+    const o = overallProgress();
+    app.innerHTML = `
+      <div class="hint">👉 Выбери тип съёмки и отмечай шаги галочками. Прогресс сохраняется в браузере автоматически.</div>
+      <div class="grid">
+        ${cards}
+        <button class="card wide" data-id="emergency">
+          <div class="num">SOS</div>
+          <div class="t">Внештатные ситуации</div>
+          <div class="s">Что случилось → что делать</div>
+        </button>
+      </div>
+      <div class="home-stats">
+        <span>Выполнено ${o.done} из ${o.total} шагов</span>
+        <button class="reset" id="resetAll">Сбросить всё</button>
+      </div>`;
+
+    app.querySelectorAll(".card").forEach(el => {
+      el.addEventListener("click", () => {
+        if (el.dataset.id === "emergency") renderEmergencyList();
+        else renderType(el.dataset.id);
+      });
+    });
+    const ra = $("#resetAll");
+    if (ra) ra.addEventListener("click", () => {
+      if (confirm("Сбросить весь прогресс по всем чек-листам?")) {
+        progress = {};
+        save();
+        renderHome();
+      }
+    });
+  }
+  // ===================== ЭКРАН: ТИП СЪЁМКИ =====================
+  function renderType(id){
+    const t = DATA.types.find(x => x.id === id);
+    if (!t) return;
+    backBtn.classList.remove("hidden");
+    const p = typeProgress(t);
+    setHeader(t.title, t.subtitle, p.pct);
+
+    let html = `
+      <div class="progress">
+        <div class="row"><span class="lbl">Выполнено шагов</span><span class="val">${p.done} из ${p.total}</span></div>
+        <div class="bar"><i style="width:${p.pct}%"></i></div>
+      </div>`;
+
+    t.sections.forEach((s, si) => {
+      html += `<section><h2>${esc(s.name)}</h2>`;
+      s.steps.forEach((st, i) => {
+        const key = t.id + "-" + si + "-" + i;
+        const done = !!progress[key];
+        const hasDetail = !!(st.detail || st.img);
+        html += `<div class="step ${done ? "done" : ""}" data-key="${key}">
+          <div class="box">${done ? "✓" : ""}</div>
+          <div class="txt">${esc(st.t)}${st.h ? `<div class="hint2">${esc(st.h)}</div>` : ""}
+            ${hasDetail ? `<button class="detail-toggle" type="button">Подробнее</button>
+              <div class="detail">${st.detail ? `<div class="dtxt">${esc(st.detail)}</div>` : ""}${st.img ? `<img src="${st.img}" alt="">` : ""}</div>` : ""}
+          </div>
+        </div>`;
+      });
+      html += `</section>`;
+    });
+
+    html += `<div class="btns">
+      <button class="btn" id="resetBtn">Сбросить</button>
+      <button class="btn primary" id="doneBtn">Готово — назад</button>
+    </div>`;
+
+    app.innerHTML = html;
+
+    app.querySelectorAll(".step").forEach(el => {
+      el.addEventListener("click", () => {
+        const key = el.dataset.key;
+        progress[key] = !progress[key];
+        save();
+        renderType(id);
+      });
+    });
+    app.querySelectorAll(".detail-toggle").forEach(el => {
+      el.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const d = el.nextElementSibling;
+        const open = d.classList.toggle("open");
+        el.textContent = open ? "Скрыть" : "Подробнее";
+      });
+    });
+    $("#resetBtn").addEventListener("click", () => {
+      t.sections.forEach((s, si) => s.steps.forEach((_, i) => { delete progress[t.id + "-" + si + "-" + i]; }));
+      save();
+      renderType(id);
+    });
+    $("#doneBtn").addEventListener("click", renderHome);
+  }
+
+  // ===================== ЭКРАН: ВНЕШТАТНЫЕ СИТУАЦИИ =====================
+  function renderEmergencyList(){
+    backBtn.classList.remove("hidden");
+    setHeader("Внештатные ситуации", "выбери, что случилось", null);
+    app.innerHTML = `<div class="hint">Дерево решений. Выбери симптом — получишь порядок действий.</div>` +
+      DATA.emergency.map((e, i) => `
+        <button class="symptom" data-i="${i}">
+          <span>${esc(e.symptom)}</span>
+          <span class="sev ${e.sev}">${e.sev === "crit" ? "стоп" : e.sev === "warn" ? "срочно" : "ок"}</span>
+        </button>`).join("");
+    app.querySelectorAll(".symptom").forEach(el => {
+      el.addEventListener("click", () => renderEmergencyDetail(+el.dataset.i));
+    });
+  }
+
+  function renderEmergencyDetail(i){
+    const e = DATA.emergency[i];
+    if (!e) return;
+    backBtn.classList.remove("hidden");
+    setHeader(e.symptom, "порядок действий", null);
+    app.innerHTML = `
+      <div class="progress">
+        <div class="row"><span class="lbl">Критичность</span><span class="val">${e.sev === "crit" ? "🔴 Стоп эфир" : e.sev === "warn" ? "🟡 Чинить параллельно" : "🟢 Не срочно"}</span></div>
+      </div>
+      <section><h2>Действия по шагам</h2>` +
+      e.steps.map((s, n) => `<div class="step"><div class="box" style="background:var(--accent);border-color:var(--accent);color:#fff">${n+1}</div><div class="txt">${esc(s)}</div></div>`).join("") +
+      `</section>
+      <div class="btns"><button class="btn primary" id="backList">← К списку ситуаций</button></div>`;
+    $("#backList").addEventListener("click", renderEmergencyList);
+  }
+
+  // ===================== НАВИГАЦИЯ =====================
+  backBtn.addEventListener("click", () => {
+    if (!backBtn.classList.contains("hidden")) renderHome();
+  });
+
+  // ===================== СТАРТ =====================
+  renderHome();
+  </script>
+</body>
+</html>
