@@ -30,6 +30,12 @@
   .item b{color:#cfd6e0}
   .flow-title{color:#cfd6e0;font-weight:700;font-size:14px;margin:12px 0 6px}
   .flow-line{color:var(--text);font-size:14px;padding:6px 0 6px 12px;border-left:2px solid var(--border);margin-left:4px}
+  .kv{display:flex;align-items:center;gap:8px;padding:7px 0;font-size:14px;flex-wrap:wrap}
+  .kv .k{color:var(--muted);flex:0 0 64px;font-weight:700}
+  .kv code{background:#10141c;border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:12.5px;word-break:break-all;flex:1 1 auto;min-width:0}
+  .kv a{color:#6ab7ff;word-break:break-all;flex:1 1 auto;min-width:0}
+  .copy{background:#10141c;border:1px solid var(--border);color:var(--text);border-radius:8px;padding:5px 11px;font-size:13px;cursor:pointer;flex:0 0 auto}
+  .copy:active{transform:scale(.96)}
 </style>
 </head>
 <body>
@@ -85,6 +91,24 @@
       </div>
     </details>
 
+    <details class="section" open>
+      <summary>🔑 Стрим-ключи и ссылки</summary>
+      <div class="content">
+        <div class="flow-title">ВКонтакте</div>
+        <div class="kv"><span class="k">RTMP</span><code>rtmp://vsu.mycdn.me/input/</code><button class="copy" data-copy="rtmp://vsu.mycdn.me/input/">📋</button></div>
+        <div class="kv"><span class="k">Key</span><code>1125900065047682_1125900065047682_71_abkckkw7bq</code><button class="copy" data-copy="1125900065047682_1125900065047682_71_abkckkw7bq">📋</button></div>
+        <div class="kv"><span class="k">Ссылка</span><a href="https://vkvideo.ru/live-225341534_456240084" target="_blank">vkvideo.ru/live-225341534_456240084</a></div>
+
+        <div class="flow-title">YouTube</div>
+        <div class="kv"><span class="k">RTMP</span><code>rtmp://x.rtmp.youtube.com/live2</code><button class="copy" data-copy="rtmp://x.rtmp.youtube.com/live2">📋</button></div>
+        <div class="kv"><span class="k">Key</span><code>tsaq-j1y9-9q3g-rqp2-67cd</code><button class="copy" data-copy="tsaq-j1y9-9q3g-rqp2-67cd">📋</button></div>
+        <div class="kv"><span class="k">Ссылка</span><a href="https://youtube.com/live/fMzAreugmBQ?feature=share" target="_blank">youtube.com/live/fMzAreugmBQ</a></div>
+
+        <div class="flow-title">📁 Презентации и обложки</div>
+        <div class="kv"><span class="k">Drive</span><a href="https://drive.google.com/drive/folders/1mHXdduGWdSJ8PYOjNvF2G86IdfuNHSf0" target="_blank">drive.google.com/drive/folders/1mHXdduGWdSJ8PYOjNvF2G86IdfuNHSf0</a></div>
+      </div>
+    </details>
+
     <details class="section">
       <summary>🎥 Эфир и режиссура</summary>
       <div class="content">
@@ -93,5 +117,26 @@
       </div>
     </details>
   </main>
+  <script>
+    function fallbackCopy(text, btn){
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); btn.textContent = '✓'; setTimeout(function(){ btn.textContent = '📋'; }, 1500); } catch(e){}
+      document.body.removeChild(ta);
+    }
+    document.querySelectorAll('.copy').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var text = btn.dataset.copy;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function(){
+            btn.textContent = '✓'; setTimeout(function(){ btn.textContent = '📋'; }, 1500);
+          }).catch(function(){ fallbackCopy(text, btn); });
+        } else {
+          fallbackCopy(text, btn);
+        }
+      });
+    });
+  </script>
 </body>
 </html>
